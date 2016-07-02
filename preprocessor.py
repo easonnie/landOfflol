@@ -31,7 +31,51 @@ def raw_reader(path):
 
 phase_df, train_df, dev_df, test_df = raw_reader(path)
 
-print(phase_df)
+# print(phase_df)
+#
+# for i, row in phase_df.iterrows():
+#     row_words = row['sentence'].lower().split()
+#     print(row_words, len(row_words), row['sentiment values'])
+#     if i == 100:
+#         break
+
+
+from dict_builder import voc_builder
+
+path = '/Users/Eason/RA/landOfflol/'
+word2id, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
+
+
+def build_new_sets(df, dict, path=None):
+    file = open(path, 'w')
+
+    for i, row in df.iterrows():
+        sentence_words = row['sentence'].lower().split()
+
+        # Change unseen words to '<unk>'
+        for j in range(len(sentence_words)):
+            if sentence_words[j] not in dict:
+                sentence_words[j] = '<unk>'
+
+        sentiment_value = row['sentiment values']
+        sentence_ids = [dict[word] for word in sentence_words]
+        length = len(sentence_ids)
+
+        print(sentence_ids, length, sentiment_value)
+
+        file.write(' '.join([str(_id) for _id in sentence_ids]))
+        file.write('|')
+        file.write(str(length))
+        file.write('|')
+        file.write(str(sentiment_value))
+        file.write('\n')
+
+    file.close()
+
+build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt')
+build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
+build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
+build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
 
 # phase_map_df = pd.read_csv('datasets/SST/dictionary.txt', sep='|', quoting=3, encoding='utf-8')
 # sentiment_labels_df = pd.read_csv('datasets/SST/sentiment_labels.txt', sep='|', quoting=3, encoding='utf-8')
