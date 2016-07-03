@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 
 
@@ -62,10 +66,9 @@ class Batch_generator:
         self.isOpen = False
         self.file.close()
 
-
-generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt', maxlength=30)
-
-data, length, label = generator.next_batch(512)
+if __name__ == '__main__':
+    generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt', maxlength=30)
+    data, length, label = generator.next_batch(512)
 
 # print(data)
 # print(length)
