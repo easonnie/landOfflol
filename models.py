@@ -1,11 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.models.rnn import rnn_cell
-from tensorflow.models.rnn import rnn
+
+from datetime import datetime
 
 
-class BasicLSTM():
-    def __init__(self, embedding=None, hidden_state_d=20, max_length=50, learning_rate=0.01, dropout_rate=1.0, vocab_size=400001, embedding_d=300, num_classes=2):
+class BasicLSTM:
+    def __init__(self, embedding=None, hidden_state_d=20, max_length=50, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
         self.data = tf.placeholder(dtype=tf.int32, shape=[None, max_length])
         self.len = tf.placeholder(dtype=tf.int32, shape=[None])
         self.label = tf.placeholder(dtype=tf.float32, shape=[None])
@@ -18,9 +18,9 @@ class BasicLSTM():
 
         self.vec_data = tf.nn.embedding_lookup(self.embedding, self.data)
 
-        lstm_cell = rnn_cell.BasicLSTMCell(hidden_state_d)
+        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
 
-        self.output, self.state = rnn.dynamic_rnn(
+        self.output, self.state = tf.nn.dynamic_rnn(
             lstm_cell,
             self.vec_data,
             dtype=tf.float32,
@@ -46,6 +46,7 @@ class BasicLSTM():
         self.sess = tf.Session()
         self.sess.run(self.init_op)
 
+    @staticmethod
     def last_relevant(output, length):
         batch_size = tf.shape(output)[0]
         max_length = int(output.get_shape()[1])
@@ -56,7 +57,7 @@ class BasicLSTM():
         return relevant
 
     def init_embedding(self, embedding=None, vocab_size=400001, embedding_d=300):
-        if embedding == None:
+        if embedding is None:
             self.embedding = tf.Variable(tf.random_uniform([vocab_size, embedding_d]))
         else:
             self.embedding = tf.Variable(embedding, [vocab_size, embedding_d], dtype=tf.float32)
@@ -74,24 +75,36 @@ class BasicLSTM():
 
 from dict_builder import voc_builder
 from Batch_generator import Batch_generator
+import os
 
 if __name__ == '__main__':
     print('Yo Yo!')
-
+    print('Embedding Loading.')
+    print('Current time is :', str(datetime.now()))
     print('Loading Glove embedding matrix')
 
-    path = '/Users/Eason/RA/landOfflol/'
-    _, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
+    path = os.getcwd()
+    _, word_embedding = voc_builder(os.path.join(path, 'datasets/Glove/glove.6B.300d.txt'))
+
+    print('Finish Loading')
+    print('Current time is :', str(datetime.now()))
     print(word_embedding.shape)
+
     model = BasicLSTM(word_embedding)
 
-    train_generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt', maxlength=50)
-    dev_generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt', maxlength=50)
+    p_train_data_path = os.path.join(path, 'datasets/Diy/sst/p_train_data.txt')
+    s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_dev_data.txt')
+
+    train_generator = Batch_generator(filename=p_train_data_path, maxlength=50)
+    dev_generator = Batch_generator(filename=s_dev_data_path, maxlength=50)
 
     dev_data, dev_length, dev_label = dev_generator.next_batch(-1)
 
-    for i in range(1000):
+    print('Start Learning')
+    for i in range(10000):
         data, length, label = train_generator.next_batch(256)
         model.train(data, length, label)
         if i % 100 == 0:
             model.predict(dev_data, dev_length, dev_label)
+            print('Current time is :', str(datetime.now()))
+            print('Number of epoch learned:', train_generator.epoch)
