@@ -67,6 +67,6 @@ generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/ss
 
 data, length, label = generator.next_batch(512)
 
-print(data)
-print(length)
-print(label)
+# print(data)
+# print(length)
+# print(label)
