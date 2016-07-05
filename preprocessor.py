@@ -5,6 +5,12 @@ import os
 path = 'datasets/SST/'
 
 
+def shuffler(filename):
+  df = pd.read_csv(filename, header=0)
+  # return the pandas dataframe
+  return df.reindex(np.random.permutation(df.index))
+
+
 def raw_reader(path):
     phase_map_df = pd.read_csv(path + 'dictionary.txt' , sep='|', quoting=3, encoding='utf-8')
     sentiment_labels_df = pd.read_csv(path + 'sentiment_labels.txt', sep='|', quoting=3, encoding='utf-8')
@@ -30,6 +36,8 @@ def raw_reader(path):
     return cleaned_phase_df, train_df, dev_df, test_df
 
 phase_df, train_df, dev_df, test_df = raw_reader(path)
+phase_df = phase_df.reindex(np.random.permutation(phase_df.index))
+# print(phase_df)
 
 
 from dict_builder import voc_builder
