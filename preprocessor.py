@@ -79,4 +79,6 @@ def build_new_sets(df, dict, path=None, isBinary=False):
 # build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
 # build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
 # build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
-build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_test_data.txt', isBinary=True)
+# build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_test_data.txt', isBinary=True)
+build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_dev_data.txt', isBinary=True)
+build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_train_data.txt', isBinary=True)
