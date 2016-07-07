@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     p_train_data_path = os.path.join(path, 'datasets/Diy/sst/p_train_data.txt')
     s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_dev_data.txt')
-    s_test_data_path = os.path.join(path, 'datasets/Diy/sst/s_test_data.txt')
+    s_test_data_path = os.path.join(path, 'datasets/Diy/sst/s_binary_test_data.txt')
 
     train_generator = Batch_generator(filename=p_train_data_path, maxlength=80)
     dev_generator = Batch_generator(filename=s_dev_data_path, maxlength=80)
