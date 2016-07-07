@@ -8,8 +8,8 @@ import tensorflow as tf
 from datetime import datetime
 
 
-class BasicLSTM:
-    def __init__(self, embedding=None, hidden_state_d=20, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
+class CNNText:
+    def __init__(self, embedding=None, n_grams=[3, 4, 5], n_features=[100, 100, 100], clip_norm=3, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
         self.data = tf.placeholder(dtype=tf.int32, shape=[None, max_length])
         self.len = tf.placeholder(dtype=tf.int32, shape=[None])
         self.label = tf.placeholder(dtype=tf.float32, shape=[None])
@@ -22,21 +22,13 @@ class BasicLSTM:
 
         self.vec_data = tf.nn.embedding_lookup(self.embedding, self.data)
 
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+        self.cnn_result = CNNText.build_cnn(self.vec_data, n_grams, n_features)
 
-        self.output, self.state = tf.nn.dynamic_rnn(
-            lstm_cell,
-            self.vec_data,
-            dtype=tf.float32,
-            sequence_length=self.len,
-        )
+        self.dropout_last = tf.nn.dropout(self.cnn_result, keep_prob=dropout_rate)
 
-        self.last = BasicLSTM.last_relevant(self.output, self.len)
-        self.dropout_last = tf.nn.dropout(self.last, keep_prob=dropout_rate)
-
-        self.weight = tf.Variable(tf.truncated_normal([hidden_state_d, num_classes], stddev=0.1))
+        self.weight = tf.clip_by_norm(tf.Variable(tf.truncated_normal([sum(n_features), num_classes], stddev=0.1)), clip_norm=3)
         self.bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
-        self.prediction = tf.nn.softmax(tf.matmul(self.last, self.weight) + self.bias)
+        self.prediction = tf.nn.softmax(tf.matmul(self.cnn_result, self.weight) + self.bias)
 
         self.cost = tf.nn.softmax_cross_entropy_with_logits(tf.matmul(self.dropout_last, self.weight) + self.bias, self.co_label)
         self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
@@ -51,14 +43,24 @@ class BasicLSTM:
         self.sess.run(self.init_op)
 
     @staticmethod
-    def last_relevant(output, length):
-        batch_size = tf.shape(output)[0]
-        max_length = int(output.get_shape()[1])
-        output_size = int(output.get_shape()[2])
-        index = tf.range(0, batch_size) * max_length + (length - 1)
-        flat = tf.reshape(output, [-1, output_size])
-        relevant = tf.gather(flat, index)
-        return relevant
+    def build_cnn(input: tf.Tensor, n_grams, n_features) -> tf.Tensor:
+        max_seq_len = int(input.get_shape()[1])
+        word_d = int(input.get_shape()[2])
+
+        tran_input = tf.reshape(input, [-1, 1, max_seq_len, word_d])
+        results = list()
+
+        for n_gram, n_feature in zip(n_grams, n_features):
+            with tf.name_scope("conv-maxpool-%s" % n_gram):
+                filter = tf.to_float(tf.Variable(tf.random_uniform([1, n_gram, word_d, n_feature], 0.05, 0.05, dtype=tf.float32)))
+                f_result = tf.nn.conv2d(tran_input, filter, strides=[1, 1, 1, 1], padding='VALID')
+                # batch_size * (valid_height)(1) * valid_length * n_feature
+
+                b = tf.Variable(tf.constant(0.1, shape=[n_feature]), name="b")
+                f_result = tf.nn.relu(tf.nn.bias_add(f_result, b))
+                p_result = tf.reshape(tf.nn.max_pool(f_result, ksize=[1, 1, max_seq_len - n_gram + 1, 1], strides=[1, 1, 1, 1], padding='VALID'), [-1, n_feature])
+                results.append(p_result)
+        return tf.concat(concat_dim=1, values=results)
 
     def init_embedding(self, embedding=None, vocab_size=400001, embedding_d=300):
         if embedding is None:
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     print('Current time is :', str(datetime.now()))
     print(word_embedding.shape)
 
-    model = BasicLSTM(word_embedding)
+    model = CNNText(word_embedding)
 
     p_train_data_path = os.path.join(path, 'datasets/Diy/sst/p_train_data.txt')
     s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_dev_data.txt')
