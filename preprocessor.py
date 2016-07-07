@@ -18,7 +18,7 @@ def raw_reader(path):
     phases_with_labels = phase_map_df.merge(sentiment_labels_df, on='phrase ids')
     phase_map_df.sort_index(inplace=True)
 
-    sentences_df = pd.read_csv(path + 'datasetSentences.txt', sep='\t', quoting=3, encoding='utf-8')
+    sentences_df = pd.read_csv(path + 'datasetSentences-cleaned.txt', sep='\t', quoting=3, encoding='iso-8859-1')
     data_split_df = pd.read_csv(path + 'datasetSplit.txt', sep=',', quoting=3, encoding='utf-8')
 
     sentences_df = sentences_df.merge(data_split_df, on='sentence_index')
@@ -46,7 +46,7 @@ path = '/Users/Eason/RA/landOfflol/'
 word2id, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
 
 
-def build_new_sets(df, dict, path=None):
+def build_new_sets(df, dict, path=None, isBinary=False):
     file = open(path, 'w')
 
     for i, row in df.iterrows():
@@ -58,6 +58,9 @@ def build_new_sets(df, dict, path=None):
                 sentence_words[j] = '<unk>'
 
         sentiment_value = row['sentiment values']
+        if isBinary is True and 0.4 < sentiment_value <= 0.6:
+            continue;
+
         sentence_ids = [dict[word] for word in sentence_words]
         length = len(sentence_ids)
 
@@ -72,7 +75,8 @@ def build_new_sets(df, dict, path=None):
 
     file.close()
 
-build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt')
-build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
-build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
-build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
+# build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt')
+# build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
+# build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
+# build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
+build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_test_data.txt', isBinary=True)
