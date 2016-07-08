@@ -58,7 +58,7 @@ with open(sentence_filepath, 'r', encoding='iso-8859-1') as f:
             print(sentence)
             count += 1
 
-print(count)
+# print(count)
 # print(dict_phase)
 # print(len(dict_sentiment))
 # sentences_df = pd.read_csv(sentence_filepath, sep='\t', quoting=3, encoding='latin')

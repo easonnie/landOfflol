@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 class BasicLSTM:
-    def __init__(self, embedding=None, hidden_state_d=20, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
+    def __init__(self, embedding=None, hidden_state_d=100, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2, rnn_input_dropout=0.15, rnn_output_dropout=0.15):
         self.data = tf.placeholder(dtype=tf.int32, shape=[None, max_length])
         self.len = tf.placeholder(dtype=tf.int32, shape=[None])
         self.label = tf.placeholder(dtype=tf.float32, shape=[None])
@@ -22,7 +22,7 @@ class BasicLSTM:
 
         self.vec_data = tf.nn.embedding_lookup(self.embedding, self.data)
 
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+        lstm_cell = tf.nn.rnn_cell.DropoutWrapper(tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True), input_keep_prob=1-rnn_input_dropout, output_keep_prob=1-rnn_output_dropout)
 
         self.output, self.state = tf.nn.dynamic_rnn(
             lstm_cell,
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     model = BasicLSTM(word_embedding)
 
     p_train_data_path = os.path.join(path, 'datasets/Diy/sst/p_train_data.txt')
-    s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_dev_data.txt')
+    s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_binary_dev_data.txt')
     s_test_data_path = os.path.join(path, 'datasets/Diy/sst/s_binary_test_data.txt')
 
     train_generator = Batch_generator(filename=p_train_data_path, maxlength=80)
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     print('Start Learning')
     for i in range(10000):
-        data, length, label = train_generator.next_batch(256)
+        data, length, label = train_generator.next_batch(64)
         model.train(data, length, label)
         if i % 100 == 0:
             model.predict(dev_data, dev_length, dev_label, name='(dev)')
