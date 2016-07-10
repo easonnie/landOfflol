@@ -6,6 +6,7 @@ path = os.getcwd()
 dic_filepath = os.path.join(path, 'datasets/SST/dictionary.txt')
 label_filepath = os.path.join(path, 'datasets/SST/sentiment_labels.txt')
 sentence_filepath = os.path.join(path, 'datasets/SST/datasetSentences-cleaned.txt')
+phase_train_path = os.path.join(path, 'datasets/Diy/sst/phase_train.txt')
 
 dict_phase = dict()
 dict_sentiment = dict()
@@ -40,7 +41,9 @@ with open(label_filepath, 'r', encoding='utf-8') as f:
         else:
             print('unk id!')
 
-with open(sentence_filepath, 'r', encoding='iso-8859-1') as f:
+# print(rev_dict_phase)
+
+with open(phase_train_path, 'r', encoding='utf-8') as f:
     i = 0
     f.readline()
     count = 0
@@ -49,14 +52,14 @@ with open(sentence_filepath, 'r', encoding='iso-8859-1') as f:
         i += 1
         if line is None or line == '':
             break
+        line = line.strip()
 
-        id = int(line.split('\t')[0])
-        sentence = line.split('\t')[1].strip()
-
-        if sentence not in rev_dict_phase:
+        if line not in rev_dict_phase:
             print('Unknown sentence:')
-            print(sentence)
+            print(line)
             count += 1
+
+print(count)
 
 # print(count)
 # print(dict_phase)

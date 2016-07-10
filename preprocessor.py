@@ -35,16 +35,6 @@ def raw_reader(path):
 
     return cleaned_phase_df, train_df, dev_df, test_df
 
-phase_df, train_df, dev_df, test_df = raw_reader(path)
-phase_df = phase_df.reindex(np.random.permutation(phase_df.index))
-# print(phase_df)
-
-
-from dict_builder import voc_builder
-
-path = '/Users/Eason/RA/landOfflol/'
-word2id, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
-
 
 def build_new_sets(df, dict, path=None, isBinary=False):
     file = open(path, 'w')
@@ -64,7 +54,7 @@ def build_new_sets(df, dict, path=None, isBinary=False):
         sentence_ids = [dict[word] for word in sentence_words]
         length = len(sentence_ids)
 
-        print(sentence_ids, length, sentiment_value)
+        # print(sentence_ids, length, sentiment_value)
 
         file.write(' '.join([str(_id) for _id in sentence_ids]))
         file.write('|')
@@ -75,10 +65,20 @@ def build_new_sets(df, dict, path=None, isBinary=False):
 
     file.close()
 
-# build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt')
-# build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
-# build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
-# build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
-# build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_test_data.txt', isBinary=True)
-build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_dev_data.txt', isBinary=True)
-build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_train_data.txt', isBinary=True)
+from dict_builder import voc_builder
+if __name__ == '__main__':
+
+    phase_df, train_df, dev_df, test_df = raw_reader(path)
+    phase_df = phase_df.reindex(np.random.permutation(phase_df.index))
+    # print(phase_df)
+
+    path = '/Users/Eason/RA/landOfflol/'
+    word2id, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
+
+    # build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt')
+    # build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_train_data.txt')
+    # build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_dev_data.txt')
+    # build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_test_data.txt')
+    # build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_test_data.txt', isBinary=True)
+    build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_dev_data.txt', isBinary=True)
+    build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/s_binary_train_data.txt', isBinary=True)

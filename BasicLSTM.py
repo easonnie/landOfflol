@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 class BasicLSTM:
-    def __init__(self, embedding=None, hidden_state_d=100, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2, rnn_input_dropout=0.15, rnn_output_dropout=0.15):
+    def __init__(self, embedding=None, hidden_state_d=100, max_length=80, learning_rate=0.0005, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2, rnn_input_dropout=0.0, rnn_output_dropout=0.0):
         self.data = tf.placeholder(dtype=tf.int32, shape=[None, max_length])
         self.len = tf.placeholder(dtype=tf.int32, shape=[None])
         self.label = tf.placeholder(dtype=tf.float32, shape=[None])
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     print('Start Learning')
     for i in range(10000):
-        data, length, label = train_generator.next_batch(64)
+        data, length, label = train_generator.next_batch(256)
         model.train(data, length, label)
         if i % 100 == 0:
             model.predict(dev_data, dev_length, dev_label, name='(dev)')
