@@ -103,6 +103,7 @@ if __name__ == '__main__':
     path = '/Users/Eason/RA/landOfflol/'
     sys.path.append(path)
 
+
     from dict_builder import voc_builder
 
     train_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_train.jsonl')
