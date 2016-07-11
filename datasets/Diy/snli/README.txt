@@ -1,0 +1,1 @@
+sentence1|length1|sentence2|length2|label(entailment = 0, neutral = 1, contradiction = 2)
