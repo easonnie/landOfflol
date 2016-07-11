@@ -2,12 +2,18 @@ import tensorflow as tf
 
 
 class BasicSeqLSTM:
-    def __init__(self, lstm_step, input_d, hidden_state_d, name):
-        with tf.name_scope(name + '/input'):
-            self.input = tf.placeholder(shape=[None, lstm_step, input_d], dtype=tf.float32, name='input')
-            self.length = tf.placeholder(shape=[None], dtype=tf.int32, name='length')
+    def __init__(self, input_, length_, hidden_state_d, name):
+        """
+        lstm_step, input_d, hidden_state_d
+        :param name:
+        :return:
+        self.input  (shape=[None, lstm_step, input_d], dtype=tf.float32, name='input')
+        self.length (shape=[None], dtype=tf.int32, name='length')
+        """
+        with tf.variable_scope(name):
+            self.input = input_
+            self.length = length_
 
-        with tf.name_scope(name + '/lstm'):
             lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
             self.output, self.last_state = tf.nn.dynamic_rnn(
                 lstm_cell,
