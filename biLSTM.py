@@ -135,3 +135,4 @@ if __name__ == '__main__':
             model.predict(t_data, t_length, t_label, name='(test)')
             print('Current time is :', str(datetime.now()))
             print('Number of epoch learned:', train_generator.epoch)
+            # test
