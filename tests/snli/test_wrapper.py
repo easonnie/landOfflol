@@ -8,11 +8,11 @@ def show_stat(ac, cost, context):
     print(context, 'cost:', cost)
 
 
-def wrapper(model, max_length=60, benchmark=None):
+def wrapper(model, max_length=60, batch_size=128, benchmark=None):
 
-    print('Loading data.')
+    print('Loading data from', os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'))
     dev_batch_generator = BatchGenerator(os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'), maxlength=max_length)
-    train_batch_generator = BatchGenerator(os.path.join(DATA_DIR, '/Diy/snli/train_data.txt'), maxlength=max_length)
+    train_batch_generator = BatchGenerator(os.path.join(DATA_DIR, 'Diy/snli/train_data.txt'), maxlength=max_length)
 
     dev_premise, dev_premise_len, dev_hypothesis, dev_hypothesis_len, dev_label = dev_batch_generator.next_batch(-1)
 
@@ -33,7 +33,7 @@ def wrapper(model, max_length=60, benchmark=None):
 
     print('Start training.')
     while True:
-        premise, premise_len, hypothesis, hypothesis_len, label = train_batch_generator.next_batch(128)
+        premise, premise_len, hypothesis, hypothesis_len, label = train_batch_generator.next_batch(batch_size)
 
         in_premise = model.input_loader.raw_premise
         in_premise_len = model.input_loader.premise_length
@@ -55,6 +55,6 @@ def wrapper(model, max_length=60, benchmark=None):
             show_stat(dev_acc, dev_cost, 'Dev')
 
             train_acc, train_cost = model.predict(feed_dict=in_feed_dit)
-            show_stat(train_acc, train_acc, 'Train')
+            show_stat(train_acc, train_cost, 'Train')
 
             print('Number of epoch:', train_batch_generator.epoch)
