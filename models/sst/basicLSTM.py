@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import time
+from datetime import datetime
+
 import numpy as np
 import tensorflow as tf
-
-from datetime import datetime
-import time
 
 
 def fine_grained_score(prediction, label_):
@@ -110,8 +110,8 @@ class BasicLSTM:
     def close(self):
         self.sess.close()
 
-from dict_builder import voc_builder
-from Batch_generator import Batch_generator
+from util.dict_builder import voc_builder
+from preprocess.sst.batchGenerator import Batch_generator
 import os
 
 if __name__ == '__main__':

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import os
 
 path = 'datasets/SST/'
 
@@ -65,7 +64,7 @@ def build_new_sets(df, dict, path=None, isBinary=False):
 
     file.close()
 
-from dict_builder import voc_builder
+from util.dict_builder import voc_builder
 if __name__ == '__main__':
 
     phase_df, train_df, dev_df, test_df = raw_reader(path)

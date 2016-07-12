@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import time
+from datetime import datetime
+
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
-import time
 
 
 def fine_grained_score(prediction, label_):
@@ -136,8 +137,8 @@ class CLSTM:
         self.sess.close()
 
 
-from dict_builder import voc_builder
-from Batch_generator import Batch_generator
+from util.dict_builder import voc_builder
+from preprocess.sst.batchGenerator import Batch_generator
 import os
 
 if __name__ == '__main__':
@@ -195,8 +196,8 @@ if __name__ == '__main__':
     saver = tf.train.Saver(tf.all_variables())
 
     # important benchmark
-    benchmark_b = 0.86
-    benchmark_f = 0.45
+    benchmark_b = 0.87
+    benchmark_f = 0.47
 
     print('Start Learning')
     for i in range(10000):

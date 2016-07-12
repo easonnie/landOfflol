@@ -1,7 +1,7 @@
-import tensorflow as tf
-from models.seqLSTM import BasicSeqModel
 import numpy as np
-import os
+import tensorflow as tf
+
+from models.base.seqLSTM import BasicSeqModel
 
 
 class SnliLoader:
@@ -28,8 +28,12 @@ class SnliBasicLSTM:
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
 
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_d, state_is_tuple=True)
-        basic_seq_lstm_premise = BasicSeqModel(input_=self.input_loader.premise, length_=self.input_loader.premise_length, hidden_state_d=hidden_d, name='premise-lstm', cell=lstm_cell)
-        basic_seq_lstm_hypothesis = BasicSeqModel(input_=self.input_loader.hypothesis, length_=self.input_loader.hypothesis_length, hidden_state_d=hidden_d, name='hypothesis-lstm', cell=lstm_cell)
+        basic_seq_lstm_premise = BasicSeqModel(input_=self.input_loader.premise,
+                                               length_=self.input_loader.premise_length, hidden_state_d=hidden_d,
+                                               name='premise-lstm', cell=lstm_cell)
+        basic_seq_lstm_hypothesis = BasicSeqModel(input_=self.input_loader.hypothesis,
+                                                  length_=self.input_loader.hypothesis_length, hidden_state_d=hidden_d,
+                                                  name='hypothesis-lstm', cell=lstm_cell)
 
         self.premise_lstm_last = basic_seq_lstm_premise.last
         self.hypothesis_lstm_last = basic_seq_lstm_hypothesis.last
@@ -60,9 +64,6 @@ class SnliBasicLSTM:
         self.init_op = tf.initialize_all_variables()
         self.sess = tf.Session()
 
-    def setup(self):
-        self.sess.run(self.init_op)
-
     def train(self, feed_dict):
         self.sess.run(self.train_op, feed_dict=feed_dict)
 
@@ -72,6 +73,9 @@ class SnliBasicLSTM:
         accuracy = np.sum(y_pred == out_pred) / len(y_pred)
         print('Current accuracy:', accuracy)
         print('Current cost:', np.sum(out_cost) / len(out_cost))
+
+    def setup(self):
+        self.sess.run(self.init_op)
 
     def close(self):
         self.sess.close()
@@ -88,20 +92,10 @@ class SnliBasicLSTM:
 
 
 if __name__ == '__main__':
-    ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
-    # print(ROOT_DIR)
-    print('ROOTROOTROOT::::::', ROOT_DIR)
-    # sys.path.append(ROOT_DIR)
-
-    # DATA_DIR = os.path.join(ROOT_DIR, 'datasets/Diy/snli')
-
-    # sys.path.append(ROOT_DIR)
-
-    from preprocess.batch_generator_snli import BatchGenerator
+    from preprocess.snli.batch_generator_snli import BatchGenerator
 
     max_length = 50
     basicLSTM = SnliBasicLSTM(lstm_step=max_length)
-    # t_batchor = BatchGenerator('/Users/Eason/RA/landOfflol/datasets/Diy/snli/test_data.txt', maxlength=max_length)
     dev_batch_generator = BatchGenerator('datasets/Diy/snli/dev_data.txt', maxlength=max_length)
     train_batch_generator = BatchGenerator('datasets/Diy/snli/train_data.txt', maxlength=max_length)
 
@@ -114,10 +108,10 @@ if __name__ == '__main__':
     in_dev_label = basicLSTM.input_loader.label
 
     in_dev_feed_dit = {in_dev_premise: dev_premise,
-                   in_dev_premise_len: dev_premise_len,
-                   in_dev_hypothesis: dev_hypothesis,
-                   in_dev_hypothesis_len: dev_hypothesis_len,
-                   in_dev_label: dev_label}
+                       in_dev_premise_len: dev_premise_len,
+                       in_dev_hypothesis: dev_hypothesis,
+                       in_dev_hypothesis_len: dev_hypothesis_len,
+                       in_dev_label: dev_label}
 
     i = 0
     basicLSTM.setup()
@@ -145,4 +139,3 @@ if __name__ == '__main__':
             basicLSTM.predict(feed_dict=in_dev_feed_dit)
             print('train:')
             basicLSTM.predict(feed_dict=in_feed_dit)
-

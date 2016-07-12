@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import re
 import sys
 
@@ -100,10 +100,10 @@ def write_clean_data(data, file):
         print('Number of item with no glod-label:', count_not_gold_label)
 
 if __name__ == '__main__':
+    from util.dict_builder import voc_builder
+
     path = '/Users/Eason/RA/landOfflol/'
     sys.path.append(path)
-
-    from dict_builder import voc_builder
 
     train_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_train.jsonl')
     dev_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_dev.jsonl')

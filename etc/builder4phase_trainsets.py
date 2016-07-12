@@ -1,7 +1,8 @@
-import pandas as pd
 import numpy as np
-from preprocessor import build_new_sets
-from dict_builder import voc_builder
+import pandas as pd
+
+from etc.preprocessor import build_new_sets
+from util.dict_builder import voc_builder
 
 path = '/Users/Eason/RA/landOfflol/datasets/'
 
