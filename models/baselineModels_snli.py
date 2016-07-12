@@ -102,8 +102,8 @@ if __name__ == '__main__':
     max_length = 50
     basicLSTM = SnliBasicLSTM(lstm_step=max_length)
     # t_batchor = BatchGenerator('/Users/Eason/RA/landOfflol/datasets/Diy/snli/test_data.txt', maxlength=max_length)
-    dev_batch_generator = BatchGenerator(os.path.join(ROOT_DIR, 'datasets/Diy/snli/dev_data.txt'), maxlength=max_length)
-    train_batch_generator = BatchGenerator(os.path.join(ROOT_DIR, 'datasets/Diy/snli/train_data.txt'), maxlength=max_length)
+    dev_batch_generator = BatchGenerator('datasets/Diy/snli/dev_data.txt', maxlength=max_length)
+    train_batch_generator = BatchGenerator('datasets/Diy/snli/train_data.txt', maxlength=max_length)
 
     dev_premise, dev_premise_len, dev_hypothesis, dev_hypothesis_len, dev_label = dev_batch_generator.next_batch(-1)
 

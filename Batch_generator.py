@@ -68,7 +68,9 @@ class Batch_generator:
 
 if __name__ == '__main__':
     generator = Batch_generator(filename='/Users/Eason/RA/landOfflol/datasets/Diy/sst/p_train_data.txt', maxlength=30)
-    data, length, label = generator.next_batch(512)
+    data, length, label = generator.next_batch(10)
+    for i in label:
+        print(i)
 
 # print(data)
 # print(length)

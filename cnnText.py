@@ -4,12 +4,34 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow as tf
-
 from datetime import datetime
+import time
+
+
+def fine_grained_score(prediction, label_):
+    if len(prediction) != len(label_):
+        print('Length not match!')
+        return
+
+    num = len(label_)
+    hit = 0
+    for p, l in zip(prediction, label_):
+        if 0 <= l <= 0.2 and 0 <= p <= 0.2:
+            hit += 1
+        elif 0.2 < l <= 0.4 and 0.2 < p <= 0.4:
+            hit += 1
+        elif 0.4 < l <= 0.6 and 0.4 < p <= 0.6:
+            hit += 1
+        elif 0.6 < l <= 0.8 and 0.6 < p <= 0.8:
+            hit += 1
+        elif 0.8 < l <= 1.0 and 0.8 < p <= 1.0:
+            hit += 1
+
+    return hit / num
 
 
 class CNNText:
-    def __init__(self, embedding=None, n_grams=[3, 4, 5], n_features=[100, 100, 100], clip_norm=3, max_length=80, learning_rate=0.01, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
+    def __init__(self, embedding=None, n_grams=[3, 4, 5], n_features=[100, 100, 100], clip_norm=3, max_length=80, learning_rate=0.001, dropout_rate=0.5, vocab_size=400001, embedding_d=300, num_classes=2):
         self.data = tf.placeholder(dtype=tf.int32, shape=[None, max_length])
         self.len = tf.placeholder(dtype=tf.int32, shape=[None])
         self.label = tf.placeholder(dtype=tf.float32, shape=[None])
@@ -73,8 +95,16 @@ class CNNText:
 
     def predict(self, batch_data, batch_length, batch_label, name=None):
         d_prediction, d_label, p_a, p_b, cur_score, cur_cost = self.sess.run((self.prediction, self.co_label, self.prediction_a, self.prediction_b, self.score, self.cost), feed_dict={self.data: batch_data, self.len: batch_length, self.label: batch_label})
-        print('Current Cost', name, 'is :', np.sum(cur_cost))
-        print('Current Score', name, 'is :', cur_score)
+        print('Current Binary Cost', name, 'is :', np.sum(cur_cost))
+        print('Current Binary Score', name, 'is :', cur_score)
+        return cur_score
+
+    def predict_fg(self, batch_data, batch_length, batch_label, name=None):
+        d_prediction, cur_cost = self.sess.run((self.prediction, self.cost), feed_dict={self.data: batch_data, self.len: batch_length, self.label: batch_label})
+        print('Current FG Cost', name, 'is :', np.sum(cur_cost))
+        cur_fg_score = fine_grained_score(d_prediction[:, 0].ravel(), batch_label)
+        print('Current FG Score', name, 'is :', cur_fg_score)
+        return cur_fg_score
 
     def close(self):
         self.sess.close()
@@ -99,22 +129,70 @@ if __name__ == '__main__':
     model = CNNText(word_embedding)
 
     p_train_data_path = os.path.join(path, 'datasets/Diy/sst/p_train_data.txt')
+
     s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_binary_dev_data.txt')
     s_test_data_path = os.path.join(path, 'datasets/Diy/sst/s_binary_test_data.txt')
 
+    fine_s_dev_data_path = os.path.join(path, 'datasets/Diy/sst/s_dev_data.txt')
+    fine_s_test_data_path = os.path.join(path, 'datasets/Diy/sst/s_test_data.txt')
+
     train_generator = Batch_generator(filename=p_train_data_path, maxlength=80)
+
     dev_generator = Batch_generator(filename=s_dev_data_path, maxlength=80)
     test_generator = Batch_generator(filename=s_test_data_path, maxlength=80)
 
     dev_data, dev_length, dev_label = dev_generator.next_batch(-1)
     t_data, t_length, t_label = test_generator.next_batch(-1)
 
+    fine_dev_generator = Batch_generator(filename=fine_s_dev_data_path, maxlength=80)
+    fine_test_generator = Batch_generator(filename=fine_s_test_data_path, maxlength=80)
+
+    f_dev_data, f_dev_length, f_dev_label = fine_dev_generator.next_batch(-1)
+    f_t_data, f_t_length, f_t_label = fine_test_generator.next_batch(-1)
+
+    # Write to file
+    MODEL_NAME = 'cnn_kim_non_static-SST'
+    out_root = 'results'
+    timestamp = '{0:%Y-%m-%d-%H:%M:%S}'.format(datetime.now())
+
+    out_dir = os.path.abspath(os.path.join(os.path.curdir, out_root, '-'.join(['result', MODEL_NAME, timestamp])))
+    checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
+    meta_result_file = os.path.abspath(os.path.join(out_dir, "meta.txt"))
+
+    print("Writing to {}\n".format(out_dir))
+
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
+    meta_file = open(meta_result_file, 'w', encoding='utf-8')
+    saver = tf.train.Saver(tf.all_variables())
+
+    # important benchmark
+    benchmark_b = 0.86
+    benchmark_f = 0.45
+
     print('Start Learning')
     for i in range(10000):
-        data, length, label = train_generator.next_batch(50)
+        data, length, label = train_generator.next_batch(64)
         model.train(data, length, label)
         if i % 100 == 0:
-            model.predict(dev_data, dev_length, dev_label, name='(dev)')
-            model.predict(t_data, t_length, t_label, name='(test)')
-            print('Current time is :', str(datetime.now()))
-            print('Number of epoch learned:', train_generator.epoch)
+                cur_accuracy = model.predict(dev_data, dev_length, dev_label, name='(dev)')
+                test_accuracy = model.predict(t_data, t_length, t_label, name='(test)')
+
+                cur_fine_accuracy = model.predict_fg(f_dev_data, f_dev_length, f_dev_label, name='(dev)')
+                test_fine_accuracy = model.predict_fg(f_t_data, f_t_length, f_t_label, name='(test)')
+
+                print('Current time is :', str(datetime.now()))
+                print('Number of epoch learned:', train_generator.epoch)
+
+                if cur_accuracy > benchmark_b or cur_fine_accuracy > benchmark_f:
+                    benchmark_b = cur_accuracy
+                    benchmark_f = cur_fine_accuracy
+
+                    tstp = str(int(time.time())) + '.ckpt'
+                    path = saver.save(model.sess, os.path.join(checkpoint_dir, tstp))
+                    meta_file.write('ckp:' + path + '\n')
+                    meta_file.write('Binary - dev accuracy: ' + str(cur_accuracy) + ' test accuracy: ' + str(test_accuracy) + '\n')
+                    meta_file.write('Fine - dev accuracy: ' + str(cur_fine_accuracy) + ' test accuracy: ' + str(test_fine_accuracy) + '\n')
+                    meta_file.write(str(datetime.now()) + '\n')
+                    print("Saved model checkpoint to {} with accuracy {}\n".format(path, cur_accuracy))
