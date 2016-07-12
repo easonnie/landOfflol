@@ -5,7 +5,7 @@ from models.base.seqLSTM import BasicSeqModel
 
 
 class SnliLoader:
-    def __init__(self, lstm_step=50, input_d=300, vocab_size=400001, embedding=None):
+    def __init__(self, lstm_step=80, input_d=300, vocab_size=400001, embedding=None):
         self.raw_premise = tf.placeholder(shape=[None, lstm_step], dtype=tf.int32, name='premise')
         self.premise_length = tf.placeholder(shape=[None], dtype=tf.int32, name='premise_length')
 
@@ -24,7 +24,7 @@ class SnliLoader:
 
 
 class SnliBasicLSTM:
-    def __init__(self, lstm_step=50, input_d=300, vocab_size=400001, hidden_d=10, num_class=3, embedding=None):
+    def __init__(self, lstm_step=80, input_d=300, vocab_size=400001, hidden_d=100, num_class=3, embedding=None):
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
 
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_d, state_is_tuple=True)
@@ -71,8 +71,9 @@ class SnliBasicLSTM:
         y_pred = feed_dict[self.input_loader.label]
         out_pred, out_cost = self.sess.run((self.prediction, self.cost), feed_dict=feed_dict)
         accuracy = np.sum(y_pred == out_pred) / len(y_pred)
-        print('Current accuracy:', accuracy)
-        print('Current cost:', np.sum(out_cost) / len(out_cost))
+        # print('Current accuracy:', accuracy)
+        # print('Current cost:', np.sum(out_cost) / len(out_cost))
+        return accuracy, (np.sum(out_cost) / len(out_cost))
 
     def setup(self):
         self.sess.run(self.init_op)
@@ -88,54 +89,3 @@ class SnliBasicLSTM:
         # print(d_p_last, d_h_last, d_embd)
         d_pred = self.sess.run(self.prediction, feed_dict=feed_dict)
         print(d_pred)
-        # self.close()
-
-
-if __name__ == '__main__':
-    from preprocess.snli.batch_generator_snli import BatchGenerator
-
-    max_length = 50
-    basicLSTM = SnliBasicLSTM(lstm_step=max_length)
-    dev_batch_generator = BatchGenerator('datasets/Diy/snli/dev_data.txt', maxlength=max_length)
-    train_batch_generator = BatchGenerator('datasets/Diy/snli/train_data.txt', maxlength=max_length)
-
-    dev_premise, dev_premise_len, dev_hypothesis, dev_hypothesis_len, dev_label = dev_batch_generator.next_batch(-1)
-
-    in_dev_premise = basicLSTM.input_loader.raw_premise
-    in_dev_premise_len = basicLSTM.input_loader.premise_length
-    in_dev_hypothesis = basicLSTM.input_loader.raw_hypothesis
-    in_dev_hypothesis_len = basicLSTM.input_loader.hypothesis_length
-    in_dev_label = basicLSTM.input_loader.label
-
-    in_dev_feed_dit = {in_dev_premise: dev_premise,
-                       in_dev_premise_len: dev_premise_len,
-                       in_dev_hypothesis: dev_hypothesis,
-                       in_dev_hypothesis_len: dev_hypothesis_len,
-                       in_dev_label: dev_label}
-
-    i = 0
-    basicLSTM.setup()
-
-    while True:
-        premise, premise_len, hypothesis, hypothesis_len, label = train_batch_generator.next_batch(128)
-
-        in_premise = basicLSTM.input_loader.raw_premise
-        in_premise_len = basicLSTM.input_loader.premise_length
-        in_hypothesis = basicLSTM.input_loader.raw_hypothesis
-        in_hypothesis_len = basicLSTM.input_loader.hypothesis_length
-        in_label = basicLSTM.input_loader.label
-
-        in_feed_dit = {in_premise: premise,
-                       in_premise_len: premise_len,
-                       in_hypothesis: hypothesis,
-                       in_hypothesis_len: hypothesis_len,
-                       in_label: label}
-
-        basicLSTM.train(feed_dict=in_feed_dit)
-        i += 1
-
-        if i % 100 == 0:
-            print('dev:')
-            basicLSTM.predict(feed_dict=in_dev_feed_dit)
-            print('train:')
-            basicLSTM.predict(feed_dict=in_feed_dit)
