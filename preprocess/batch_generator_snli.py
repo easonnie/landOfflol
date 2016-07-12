@@ -61,8 +61,8 @@ class BatchGenerator:
             s_ids_1 = pad(s_ids_1, maxlength)
 
             batch_sentence1 = np.append(batch_sentence1, [s_ids_1], axis=0)
-            s_len_1 = line[1]
-            batch_length1 = np.append(batch_length1, np.int32(s_len_1))
+            s_len_1 = np.int32(line[1]) if np.int32(line[1]) < maxlength else maxlength
+            batch_length1 = np.append(batch_length1, s_len_1)
 
             # sentence2 : hypothesis
             s_ids_2 = line[2]
@@ -72,8 +72,8 @@ class BatchGenerator:
             s_ids_2 = pad(s_ids_2, maxlength)
 
             batch_sentence2 = np.append(batch_sentence2, [s_ids_2], axis=0)
-            s_len_2 = line[3]
-            batch_length2 = np.append(batch_length2, np.int32(s_len_2))
+            s_len_2 = np.int32(line[3]) if np.int32(line[3]) < maxlength else maxlength
+            batch_length2 = np.append(batch_length2, s_len_2)
 
             # label
             p_label = line[4]

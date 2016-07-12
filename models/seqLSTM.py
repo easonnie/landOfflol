@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 
-class BasicSeqLSTM:
-    def __init__(self, input_, length_, hidden_state_d, name):
+class BasicSeqModel:
+    def __init__(self, input_, length_, hidden_state_d, name, cell=None):
         """
         lstm_step, input_d, hidden_state_d
         :param name:
@@ -14,14 +14,17 @@ class BasicSeqLSTM:
             self.input = input_
             self.length = length_
 
-            lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+            # default : LSTM
+            if cell is None:
+                cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+
             self.output, self.last_state = tf.nn.dynamic_rnn(
-                lstm_cell,
+                cell,
                 self.input,
                 dtype=tf.float32,
                 sequence_length=self.length,
             )
-            self.last = BasicSeqLSTM.last_relevant(self.output, self.length)
+            self.last = BasicSeqModel.last_relevant(self.output, self.length)
 
     @staticmethod
     def last_relevant(output, length):
@@ -32,3 +35,10 @@ class BasicSeqLSTM:
         flat = tf.reshape(output, [-1, output_size])
         relevant = tf.gather(flat, index)
         return relevant
+
+
+class SeqLoader:
+    def __init__(self, lstm_step, input_d, name):
+        with tf.name_scope(name):
+            self.input = tf.placeholder(shape=[None, lstm_step, input_d], dtype=tf.float32, name='input')
+            self.length = tf.placeholder(shape=[None], dtype=tf.int32, name='length')
