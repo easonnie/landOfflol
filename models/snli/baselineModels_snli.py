@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-
 from models.base.seqLSTM import BasicSeqModel
 
 
@@ -24,7 +23,16 @@ class SnliLoader:
 
 
 class SnliBasicLSTM:
-    def __init__(self, lstm_step=80, input_d=300, vocab_size=400001, hidden_d=100, num_class=3, embedding=None):
+    def __init__(self, lstm_step=80, input_d=300, vocab_size=400001, hidden_d=100, num_class=3, learning_rate=0.001, softmax_keeprate=0.5, embedding=None,
+                 **kwargs):
+        self.model_info = self.record_info(LSTM_Step=lstm_step,
+                                           Word_Dimension=input_d,
+                                           Vocabluary_Size=vocab_size,
+                                           LSTM_Hidden_Dimension=hidden_d,
+                                           Number_Class=num_class,
+                                           SoftMax_Keep_Rate=softmax_keeprate,
+                                                        ** kwargs)
+
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
 
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_d, state_is_tuple=True)
@@ -58,11 +66,14 @@ class SnliBasicLSTM:
         self.softmax_output = tf.nn.softmax(self.layer3_tanh_output)
         self.prediction = tf.argmax(self.softmax_output, dimension=1)
 
-        self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(self.layer3_tanh_output, self.input_loader.label)
+        self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(tf.nn.dropout(self.layer3_tanh_output, keep_prob=softmax_keeprate), self.input_loader.label)
 
-        self.train_op = tf.train.AdamOptimizer().minimize(self.cost)
+        self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
         self.init_op = tf.initialize_all_variables()
         self.sess = tf.Session()
+
+    def record_info(self, **kwargs):
+        return kwargs
 
     def train(self, feed_dict):
         self.sess.run(self.train_op, feed_dict=feed_dict)
@@ -89,3 +100,8 @@ class SnliBasicLSTM:
         # print(d_p_last, d_h_last, d_embd)
         d_pred = self.sess.run(self.prediction, feed_dict=feed_dict)
         print(d_pred)
+
+
+if __name__ == '__main__':
+    model = SnliBasicLSTM(Name='BasicLSTM', Embedding='GLOVE')
+    print(str(model.model_info))

@@ -1,5 +1,6 @@
 from preprocess.snli.batch_generator_snli import BatchGenerator
 from config import ROOT_DIR, DATA_DIR
+from util.save_tool import ResultSaver
 import os
 
 
@@ -8,7 +9,7 @@ def show_stat(ac, cost, context):
     print(context, 'cost:', cost)
 
 
-def wrapper(model, max_length=60, batch_size=128, benchmark=None):
+def wrapper(model_name, model, max_length=60, batch_size=128, benchmark=None):
 
     print('Loading data from', os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'))
     dev_batch_generator = BatchGenerator(os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'), maxlength=max_length)
@@ -30,6 +31,11 @@ def wrapper(model, max_length=60, batch_size=128, benchmark=None):
 
     i = 0
     model.setup()
+    recorder = ResultSaver(model_name=model_name, model=model)
+    recorder.setup()
+    # BENCHMARK Important
+    if benchmark is None:
+        benchmark = 0.75
 
     print('Start training.')
     while True:
@@ -56,5 +62,11 @@ def wrapper(model, max_length=60, batch_size=128, benchmark=None):
 
             train_acc, train_cost = model.predict(feed_dict=in_feed_dit)
             show_stat(train_acc, train_cost, 'Train')
+
+            if dev_acc > benchmark:
+                benchmark = dev_acc
+                info = ' '.join(['Dev accuracy:', str(dev_acc), 'Train accuracy:', str(train_acc), 'Number of epoch:',
+                                 str(train_batch_generator.epoch)])
+                recorder.logging(info)
 
             print('Number of epoch:', train_batch_generator.epoch)
