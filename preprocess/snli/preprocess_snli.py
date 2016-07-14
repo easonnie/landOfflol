@@ -100,20 +100,18 @@ def write_clean_data(data, file):
         print('Number of item with no glod-label:', count_not_gold_label)
 
 if __name__ == '__main__':
-    from util.dict_builder import voc_builder
+    from util.dict_builder import build_voc
+    from config import DATA_DIR
 
-    path = '/Users/Eason/RA/landOfflol/'
-    sys.path.append(path)
-
-    train_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_train.jsonl')
-    dev_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_dev.jsonl')
-    test_raw_file = os.path.join(path, 'datasets/SNLI/snli_1.0_test.jsonl')
+    train_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_train.jsonl')
+    dev_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_dev.jsonl')
+    test_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_test.jsonl')
 
     test_data = read_raw_file(test_raw_file)
     dev_data = read_raw_file(dev_raw_file)
     train_data = read_raw_file(train_raw_file)
 
-    word2id, word_embedding = voc_builder(path + 'datasets/Glove/glove.6B.300d.txt')
+    word2id, word_embedding = build_voc(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),  2196018)
 
     embd_test_data, count_t = sentence2id(test_data, word2id)
     embd_dev_data, count_d = sentence2id(dev_data, word2id)
@@ -123,6 +121,6 @@ if __name__ == '__main__':
     print(count_t, 'in test')
     print(count_d, 'in dev')
 
-    write_clean_data(embd_test_data, path + 'datasets/Diy/snli/test_data.txt')
-    write_clean_data(embd_dev_data, path + 'datasets/Diy/snli/dev_data.txt')
-    write_clean_data(embd_train_data, path + 'datasets/Diy/snli/train_data.txt')
+    write_clean_data(embd_test_data, os.path.join(DATA_DIR, 'Diy/snli/840b/test_data.txt'))
+    write_clean_data(embd_dev_data, os.path.join(DATA_DIR, 'Diy/snli/840b/dev_data.txt'))
+    write_clean_data(embd_train_data, os.path.join(DATA_DIR, 'Diy/snli/840b/train_data.txt'))
