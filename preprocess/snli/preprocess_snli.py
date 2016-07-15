@@ -109,7 +109,8 @@ def write_clean_data(data, file):
         print('Number of item with no glod-label:', count_not_gold_label)
 
 if __name__ == '__main__':
-    from util.dict_builder import build_voc
+    from util.dict_builder import fine_selected_embedding
+    from util.vocab_stat import get_dict
     from config import DATA_DIR
 
     train_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_train.jsonl')
@@ -120,7 +121,9 @@ if __name__ == '__main__':
     dev_data = read_raw_file(dev_raw_file)
     train_data = read_raw_file(train_raw_file)
 
-    word2id, word_embedding = build_voc(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),  2196018)
+    fine_dict = get_dict()
+    word2id, word_embedding = fine_selected_embedding(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),
+                                                      fine_dict, pre_vocab_size=2196018)
 
     embd_test_data, count_t = sentence2id(test_data, word2id)
     embd_dev_data, count_d = sentence2id(dev_data, word2id)
