@@ -1,10 +1,10 @@
-Summary of the SNLI and SST data sets for experiments
+# Summary of the SNLI and SST data sets for experiments
 ## Experiment Global Vocabulary
 Experiment global vocabulary is a word set that contains all the words in the SST and SNLI data sets.
 Pickled global vocabulary is in the `/datasets/Diy/etc/dict.pkl` file.
 
 ## Glove 840B word embedding
-We use glove 840B word embedding as our word embedding.
+We use glove 840B word embedding as word embedding.
 
 
 ## SST data set
@@ -15,18 +15,12 @@ Total: 2048 (6B glove) | 1767 (840 glove)
 Total sentences pairs in each set:
 
 Number of sentence pairs in each set with no glod-label:
-test: 176
-dev: 158
-train: 785
+test/dev/train 176/158/785
 
 Number of 'unk' tokens (words not included in 6B glove embedding)
-test: 640
-dev: 600
-train: 30255
+test/dev/train 640/600/30255
 
 Number of 'unk' tokens (words not included in 840B glove embedding)
-test: 259
-dev: 263
-train: 13664
+test/dev/train 259/263/13664
 
 Much less unseen words when using 840B Glove.
