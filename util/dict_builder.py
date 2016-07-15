@@ -9,6 +9,7 @@ import zipfile
 import pickle
 from os.path import basename
 import os
+import re
 from pprint import pprint
 
 
@@ -23,6 +24,50 @@ def voc_builder(vocab_path):
     embedding = np.asarray(em_df.iloc[:, 1:])
     embedding = np.row_stack((embedding, embedding.mean(axis=0)))
 
+    return word_dict, embedding
+
+
+def fine_selected_embedding(vocab_path, w_set, pre_vocab_size, word_d=300, name=None):
+    pattern = '|'.join(['^' + re.escape(word) + '$' for word in w_set])
+    # print(pattern)
+    if name is None:
+        name = os.path.splitext(basename(vocab_path))[0] + '.fine_selected'
+    dir = os.path.dirname(vocab_path)
+
+    word_dict, embedding = load_embedding(dir, name)
+
+    if word_dict is not None and embedding is not None:
+        return word_dict, embedding
+
+    word_dict = {}
+    embedding = np.empty((0, word_d))
+
+    em_zipfile = zipfile.ZipFile(vocab_path)
+    em_df = pd.read_csv(em_zipfile.open(em_zipfile.namelist()[0], 'r'),
+                        sep=' ', header=None, quoting=3, encoding='utf-8',
+                        keep_default_na=False, iterator=True, chunksize=126000)
+
+    print('Approximate', pre_vocab_size, 'words')
+    wdgts = [pgb.SimpleProgress(), ' ',
+             pgb.Bar(marker='∎', left='|', right='|'), ' ',
+             pgb.Timer(), ' ',
+             pgb.ETA()]
+
+    with pgb.ProgressBar(widgets=wdgts, maxval=pre_vocab_size) as p:
+        counter = 0
+        for i, chuck in enumerate(em_df):
+            for j, row in chuck.iterrows():
+                if row[0] in w_set:
+                    word_dict[row[0]] = counter
+                    counter += 1
+                p.update(i * 126000 + j)
+            embedding = np.row_stack((embedding,
+                                      np.asarray(chuck[chuck.iloc[:, 0].str.match(pattern)].iloc[:, 1:])))
+
+    embedding = np.row_stack((embedding, embedding.mean(axis=0)))
+    word_dict['<unk>'] = len(word_dict)
+
+    save_embedding(dir, name, word_dict, embedding)
     return word_dict, embedding
 
 
@@ -107,16 +152,17 @@ def load_embedding(path, name):
 if __name__ == '__main__':
     from config import DATA_DIR
     import os
+    from util.vocab_stat import get_dict
     # 2196018
     # 400001
-    file_path = os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip')
-    di_1, embd_1 = build_voc(file_path,  2196018)
-
-    # file_path = os.path.join(DATA_DIR, 'Glove/glove.6B.300d.zip')
-    # di_1, embd_1 = build_voc(file_path,  400001)
-    print(len(di_1))
-    print(embd_1)
-    pprint(embd_1.shape)
+    # file_path = os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip')
+    # di_1, embd_1 = build_voc(file_path,  2196018)
+    dict_ = get_dict()
+    file_path = os.path.join(DATA_DIR, 'Glove/glove.6B.300d.zip')
+    di_1, embd_1 = fine_selected_embedding(file_path, dict_, pre_vocab_size=400001)
+    # print(len(di_1))
+    # print(embd_1)
+    # pprint(embd_1.shape)
 
 
     # di_2, embd_2 = voc_builder(os.path.join(DATA_DIR, 'Glove/glove.6B.300d.txt'))

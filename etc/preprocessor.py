@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import re
 
 path = 'datasets/SST/'
 
@@ -39,7 +40,8 @@ def build_new_sets(df, dict, path=None, isBinary=False):
     file = open(path, 'w')
 
     for i, row in df.iterrows():
-        sentence_words = row['sentence'].lower().split()
+        row_sentence = re.sub(r'"', ' " ', row['sentence'])
+        sentence_words = row_sentence.lower().split()
 
         # Change unseen words to '<unk>'
         for j in range(len(sentence_words)):
