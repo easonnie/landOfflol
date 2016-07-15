@@ -2,6 +2,7 @@ from preprocess.snli.batch_generator_snli import BatchGenerator
 from config import ROOT_DIR, DATA_DIR
 from util.save_tool import ResultSaver
 import os
+import sys
 
 
 def show_stat(ac, cost, context):
@@ -30,12 +31,12 @@ def wrapper(model_name, model, max_length=60, batch_size=128, benchmark=None):
                        in_dev_label: dev_label}
 
     i = 0
-    model.setup()
+
     recorder = ResultSaver(model_name=model_name, model=model)
     recorder.setup()
     # BENCHMARK Important
     if benchmark is None:
-        benchmark = 0.75
+        benchmark = 0.70
 
     print('Start training.')
     while True:
@@ -70,3 +71,4 @@ def wrapper(model_name, model, max_length=60, batch_size=128, benchmark=None):
                 recorder.logging(info)
 
             print('Number of epoch:', train_batch_generator.epoch)
+            sys.stdout.flush()
