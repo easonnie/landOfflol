@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class BasicSeqModel:
-    def __init__(self, input_, length_, hidden_state_d, name, cell=None):
+    def __init__(self, input_, length_, hidden_state_d, name, cell=None, input_keep_rate=1.0, output_keep_rate=1.0):
         """
         lstm_step, input_d, hidden_state_d
         :param name:
@@ -20,11 +20,11 @@ class BasicSeqModel:
 
             self.output, self.last_state = tf.nn.dynamic_rnn(
                 cell,
-                self.input,
+                tf.nn.dropout(self.input, input_keep_rate),
                 dtype=tf.float32,
                 sequence_length=self.length,
             )
-            self.last = BasicSeqModel.last_relevant(self.output, self.length)
+            self.last = tf.nn.dropout(BasicSeqModel.last_relevant(self.output, self.length), output_keep_rate)
 
     @staticmethod
     def last_relevant(output, length):

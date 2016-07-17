@@ -1,29 +1,40 @@
 import numpy as np
 import tensorflow as tf
 from models.base.seqLSTM import BasicSeqModel
+import models.base.util as baseU
 
 
 class SnliLoader:
     def __init__(self, lstm_step=80, input_d=300, vocab_size=2196018, embedding=None):
+        """
+        Input   raw_premise (word ids)
+                raw_hypothesis (word ids)
+                lstm_step should be the max length of the input
+        """
         self.raw_premise = tf.placeholder(shape=[None, lstm_step], dtype=tf.int32, name='premise')
         self.premise_length = tf.placeholder(shape=[None], dtype=tf.int32, name='premise_length')
 
         self.raw_hypothesis = tf.placeholder(shape=[None, lstm_step], dtype=tf.int32, name='hypothesis')
         self.hypothesis_length = tf.placeholder(shape=[None], dtype=tf.int32, name='hypothesis_length')
 
+        self.label = tf.placeholder(shape=[None], dtype=tf.int32)
         # Those operations take too many memory
         # Use cpu for those operations (deprecated when using truncate embedding)
         if embedding is not None:
             self.input_embedding = tf.placeholder(dtype=tf.float32, shape=embedding.shape, name='word_embedding')
             self.embedding = tf.Variable(tf.zeros(embedding.shape, dtype=tf.float32))
         else:
+            """
+            If embedding is not provided, then use random number as embedding
+            """
             self.embedding = tf.Variable(tf.random_uniform([vocab_size, input_d], minval=-0.05, maxval=0.05))
+        """
+        This is the embedding operation. It will be invoked by loading embedding function in the actual model
+        """
         self.load_embedding_op = self.embedding.assign(self.input_embedding)
 
         self.premise = tf.nn.embedding_lookup(self.embedding, self.raw_premise)
         self.hypothesis = tf.nn.embedding_lookup(self.embedding, self.raw_hypothesis)
-
-        self.label = tf.placeholder(shape=[None], dtype=tf.int32)
 
     def feed_dict_builder(self, data):
         """
@@ -42,25 +53,31 @@ class SnliLoader:
 
 
 class SnliBasicLSTM:
-    def __init__(self, lstm_step=80, input_d=300, vocab_size=2196018, hidden_d=100, num_class=3, learning_rate=0.001, softmax_keeprate=0.5, embedding=None,
+    def __init__(self, lstm_step=80, input_d=300, vocab_size=2196018, hidden_d=100, num_class=3, learning_rate=0.001,
+                 softmax_keeprate=1, lstm_input_keep_rate=0.5, lstm_output_keep_rate=0.5, embedding=None,
                  **kwargs):
-        self.model_info = self.record_info(LSTM_Step=lstm_step,
-                                           Word_Dimension=input_d,
-                                           Vocabluary_Size=vocab_size,
-                                           LSTM_Hidden_Dimension=hidden_d,
-                                           Number_Class=num_class,
-                                           SoftMax_Keep_Rate=softmax_keeprate,
-                                                        ** kwargs)
+        self.model_info = baseU.record_info(LSTM_Step=lstm_step,
+                                            Word_Dimension=input_d,
+                                            Vocabluary_Size=vocab_size,
+                                            LSTM_Hidden_Dimension=hidden_d,
+                                            Number_Class=num_class,
+                                            SoftMax_Keep_Rate=softmax_keeprate)
 
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
 
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_d, state_is_tuple=True)
         basic_seq_lstm_premise = BasicSeqModel(input_=self.input_loader.premise,
-                                               length_=self.input_loader.premise_length, hidden_state_d=hidden_d,
-                                               name='premise-lstm', cell=lstm_cell)
+                                               length_=self.input_loader.premise_length,
+                                               hidden_state_d=hidden_d,
+                                               name='premise-lstm', cell=lstm_cell,
+                                               input_keep_rate=lstm_input_keep_rate,
+                                               output_keep_rate=lstm_output_keep_rate)
         basic_seq_lstm_hypothesis = BasicSeqModel(input_=self.input_loader.hypothesis,
-                                                  length_=self.input_loader.hypothesis_length, hidden_state_d=hidden_d,
-                                                  name='hypothesis-lstm', cell=lstm_cell)
+                                                  length_=self.input_loader.hypothesis_length,
+                                                  hidden_state_d=hidden_d,
+                                                  name='hypothesis-lstm', cell=lstm_cell,
+                                                  input_keep_rate=lstm_input_keep_rate,
+                                                  output_keep_rate=lstm_output_keep_rate)
 
         self.premise_lstm_last = basic_seq_lstm_premise.last
         self.hypothesis_lstm_last = basic_seq_lstm_hypothesis.last
@@ -85,7 +102,8 @@ class SnliBasicLSTM:
         self.softmax_output = tf.nn.softmax(self.layer3_tanh_output)
         self.prediction = tf.argmax(self.softmax_output, dimension=1)
 
-        self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(tf.nn.dropout(self.layer3_tanh_output, keep_prob=softmax_keeprate), self.input_loader.label)
+        self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            tf.nn.dropout(self.layer3_tanh_output, keep_prob=softmax_keeprate), self.input_loader.label)
 
         self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
         self.init_op = tf.initialize_all_variables()
@@ -98,9 +116,6 @@ class SnliBasicLSTM:
             print('Load embedding.', 'Vocabulary size:', embedding.shape[0], 'Word dimension', embedding.shape[1])
             self.sess.run(self.input_loader.load_embedding_op, feed_dict={self.input_loader.input_embedding: embedding})
 
-    def record_info(self, **kwargs):
-        return kwargs
-
     def train(self, feed_dict):
         self.sess.run(self.train_op, feed_dict=feed_dict)
 
@@ -112,8 +127,16 @@ class SnliBasicLSTM:
         # print('Current cost:', np.sum(out_cost) / len(out_cost))
         return accuracy, (np.sum(out_cost) / len(out_cost))
 
-    def setup(self):
+    def setup(self, embedding=None):
+        self.load_embedding(embedding=embedding)
         self.sess.run(self.init_op)
+        newinfo = baseU.record_info(Word_Dimension=embedding.shape[1],
+                                    Vocabluary_Size=embedding.shape[0])
+        """
+        Update the information about the model after load embedding.
+        """
+        for k, v in newinfo.items():
+            self.model_info[k] = v
 
     def close(self):
         self.sess.close()
