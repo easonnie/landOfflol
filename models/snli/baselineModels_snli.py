@@ -12,19 +12,33 @@ class SnliLoader:
         self.hypothesis_length = tf.placeholder(shape=[None], dtype=tf.int32, name='hypothesis_length')
 
         # Those operations take too many memory
-        # Use cpu for those operations
-        with tf.device("/cpu:0"):
-            if embedding is not None:
-                self.input_embedding = tf.placeholder(dtype=tf.float32, shape=embedding.shape, name='word_embedding')
-                self.embedding = tf.Variable(tf.zeros(embedding.shape, dtype=tf.float32))
-            else:
-                self.embedding = tf.Variable(tf.random_uniform([vocab_size, input_d], minval=-0.05, maxval=0.05))
-            self.load_embedding_op = self.embedding.assign(self.input_embedding)
+        # Use cpu for those operations (deprecated when using truncate embedding)
+        if embedding is not None:
+            self.input_embedding = tf.placeholder(dtype=tf.float32, shape=embedding.shape, name='word_embedding')
+            self.embedding = tf.Variable(tf.zeros(embedding.shape, dtype=tf.float32))
+        else:
+            self.embedding = tf.Variable(tf.random_uniform([vocab_size, input_d], minval=-0.05, maxval=0.05))
+        self.load_embedding_op = self.embedding.assign(self.input_embedding)
 
-            self.premise = tf.nn.embedding_lookup(self.embedding, self.raw_premise)
-            self.hypothesis = tf.nn.embedding_lookup(self.embedding, self.raw_hypothesis)
+        self.premise = tf.nn.embedding_lookup(self.embedding, self.raw_premise)
+        self.hypothesis = tf.nn.embedding_lookup(self.embedding, self.raw_hypothesis)
 
         self.label = tf.placeholder(shape=[None], dtype=tf.int32)
+
+    def feed_dict_builder(self, data):
+        """
+        :param data: The data should be a return tuple the snli_batchGenerator
+        :return:
+        """
+        premise, p_len, hypothesis, h_len, label = data
+        feed_dict = {
+            self.raw_premise: premise,
+            self.premise_length: p_len,
+            self.raw_hypothesis: hypothesis,
+            self.hypothesis_length: h_len,
+            self.label: label
+        }
+        return feed_dict
 
 
 class SnliBasicLSTM:

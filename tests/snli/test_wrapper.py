@@ -3,6 +3,7 @@ from config import ROOT_DIR, DATA_DIR
 from util.save_tool import ResultSaver
 import os
 import sys
+import config
 
 
 def show_stat(ac, cost, context):
@@ -10,11 +11,14 @@ def show_stat(ac, cost, context):
     print(context, 'cost:', cost)
 
 
-def wrapper(model_name, model, max_length=60, batch_size=128, benchmark=None):
+def wrapper(model_name, model, max_length=80, batch_size=128, benchmark=None):
 
-    print('Loading data from', os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'))
-    dev_batch_generator = BatchGenerator(os.path.join(DATA_DIR, 'Diy/snli/dev_data.txt'), maxlength=max_length)
-    train_batch_generator = BatchGenerator(os.path.join(DATA_DIR, 'Diy/snli/train_data.txt'), maxlength=max_length)
+    print('Loading data from', os.path.join(config.SNLI_CLEANED_840B_TRAIN_SET_FILE))
+    dev_batch_generator = BatchGenerator(os.path.join(config.SNLI_CLEANED_840B_DEV_SET_FILE), maxlength=max_length)
+    test_batch_generator = BatchGenerator(os.path.join(config.SNLI_CLEANED_840B_TEST_SET_FILE), maxlength=max_length)
+    train_batch_generator = BatchGenerator(os.path.join(config.SNLI_CLEANED_840B_TRAIN_SET_FILE), maxlength=max_length)
+
+    #TODO build feed_dict for data input
 
     dev_premise, dev_premise_len, dev_hypothesis, dev_hypothesis_len, dev_label = dev_batch_generator.next_batch(-1)
 
@@ -31,7 +35,6 @@ def wrapper(model_name, model, max_length=60, batch_size=128, benchmark=None):
                        in_dev_label: dev_label}
 
     i = 0
-
     recorder = ResultSaver(model_name=model_name, model=model)
     recorder.setup()
     # BENCHMARK Important

@@ -67,7 +67,8 @@ def build_new_sets(df, dict, path=None, isBinary=False):
     file.close()
 
 if __name__ == '__main__':
-    from util.dict_builder import build_voc
+    from util.dict_builder import build_voc, fine_selected_embedding
+    from util.vocab_stat import get_dict
     from config import DATA_DIR
     import os
 
@@ -75,13 +76,14 @@ if __name__ == '__main__':
     phase_df = phase_df.reindex(np.random.permutation(phase_df.index))
     # print(phase_df)
 
-    path = os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip')
-    word2id, word_embedding = build_voc(path, 2196018)
+    fine_dict = get_dict()
+    word2id, word_embedding = fine_selected_embedding(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),
+                                                      fine_dict, pre_vocab_size=2196018)
 
-    build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/p_train_data.txt')
-    build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_train_data.txt')
-    build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_dev_data.txt')
-    build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_test_data.txt')
-    build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_binary_test_data.txt', isBinary=True)
-    build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_binary_dev_data.txt', isBinary=True)
-    build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/840b/s_binary_train_data.txt', isBinary=True)
+    build_new_sets(phase_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/p_train_data.txt')
+    build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_train_data.txt')
+    build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_dev_data.txt')
+    build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_test_data.txt')
+    build_new_sets(test_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_binary_test_data.txt', isBinary=True)
+    build_new_sets(dev_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_binary_dev_data.txt', isBinary=True)
+    build_new_sets(train_df, word2id, path='/Users/Eason/RA/landOfflol/datasets/Diy/sst/fs/s_binary_train_data.txt', isBinary=True)

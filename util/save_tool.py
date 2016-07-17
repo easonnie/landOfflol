@@ -27,7 +27,7 @@ class ResultSaver:
 
         with open(self.meta_filename, 'w', encoding='utf-8') as meta_f:
             json.dump(obj=self.model.model_info, sort_keys=True, indent=4, fp=meta_f)
-            print("Saved model meta-info to {}".format(self.log_file))
+            print("Saved model meta-info to {}".format(self.log_filename))
 
         if self.savePara:
             self.tf_saver = tf.train.Saver(tf.all_variables())

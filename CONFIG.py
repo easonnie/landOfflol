@@ -23,7 +23,7 @@ SNLI_CLEANED_840B_TRAIN_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'train_d
 SNLI_CLEANED_840B_DEV_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'dev_data.txt')
 SNLI_CLEANED_840B_TEST_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'test_data.txt')
 
-
+˚
 def info_(**kwargs):
     return kwargs
 

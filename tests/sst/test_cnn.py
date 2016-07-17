@@ -10,7 +10,7 @@ if __name__ == '__main__':
     max_length = 80
 
     print('Loading word embedding.')
-    word2id, word_embedding = voc_builder(os.path.join(DATA_DIR, 'Glove/glove.6B.300d.txt'))
+    word2id, word_embedding = voc_builder(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'))
 
     timestamp = '{0:(%Y-%m-%d-%H:%M:%S)}'.format(datetime.now())
 
