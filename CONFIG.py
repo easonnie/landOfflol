@@ -10,10 +10,18 @@ DATA_DIR = os.path.join(ROOT_DIR, 'datasets')
 GLOVE_840B_PATH = os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip')
 GLOVE_6B_PATH = os.path.join(DATA_DIR, 'Glove/glove.6B.300d.zip')
 
+GLOVE_6B_PATH_VOCAB_SIZE = 400001
+GLOVE_840B_PATH_VOCAB_SIZE = 2196018
+GLOVE_FS_PATH_VOCAB_SIZE = 40890
+
 SST_CLEANED_840B_PATH = os.path.join(DATA_DIR, 'Diy/sst/840b')
 SST_CLEANED_6B_PATH = os.path.join(DATA_DIR, 'Diy/sst/6b')
 
 SNLI_CLEANED_840B_PATH = os.path.join(DATA_DIR, 'Diy/snli/840b')
+
+SNLI_CLEANED_840B_TRAIN_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'train_data.txt')
+SNLI_CLEANED_840B_DEV_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'dev_data.txt')
+SNLI_CLEANED_840B_TEST_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'test_data.txt')
 
 
 def info_(**kwargs):
