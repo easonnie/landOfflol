@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 import tensorflow as tf
 import json
+import logging
 
 
 class ResultSaver:
@@ -23,7 +24,7 @@ class ResultSaver:
     def setup(self):
         if not os.path.exists(self.checkpoint_dir):
             os.makedirs(self.checkpoint_dir)
-        self.log_file = open(self.log_filename, 'w', encoding='utf-8')
+        # self.log_file = open(self.log_filename, 'w', encoding='utf-8')
 
         with open(self.meta_filename, 'w', encoding='utf-8') as meta_f:
             json.dump(obj=self.model.model_info, sort_keys=True, indent=4, fp=meta_f)
@@ -32,13 +33,19 @@ class ResultSaver:
         if self.savePara:
             self.tf_saver = tf.train.Saver(tf.all_variables())
 
-    def logging(self, info, with_time=True):
-        self.log_file.write(info + '\n')
+    def logging(self, msg, with_time=True):
         if with_time:
-            timestamp = '{0:(%Y-%m-%d-%H:%M:%S)}'.format(datetime.now())
-            self.log_file.write(' '.join(['Time:', timestamp, '\n']))
-            self.log_file.flush()
-        print("Saved prediction stats to {}".format(self.log_file))
+            logging.basicConfig(filename=self.log_filename, level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %H:%M:%S')
+            logging.info(msg)
+        else:
+            logging.basicConfig(filename=self.log_filename, level=logging.INFO, format='%(message)s')
+        print("Logging stats to {}".format(self.log_filename))
+        # self.log_file.write(msg + '\n')
+        # if with_time:
+        #     timestamp = '{0:(%Y-%m-%d-%H:%M:%S)}'.format(datetime.now())
+        #     self.log_file.write(' '.join(['Time:', timestamp, '\n']))
+        #     self.log_file.flush()
+        # print("Saved prediction stats to {}".format(self.log_file))
 
     def save_params(self, info=None, with_time=True):
         timestamp = str(int(time.time())) + '.ckpt'

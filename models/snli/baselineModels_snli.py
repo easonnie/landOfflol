@@ -54,7 +54,7 @@ class SnliLoader:
 
 class SnliBasicLSTM:
     def __init__(self, lstm_step=80, input_d=300, vocab_size=2196018, hidden_d=100, num_class=3, learning_rate=0.001,
-                 softmax_keeprate=1, lstm_input_keep_rate=0.5, lstm_output_keep_rate=0.5, embedding=None,
+                 softmax_keeprate=1, lstm_input_keep_rate=0.25, lstm_output_keep_rate=0.25, embedding=None,
                  **kwargs):
         self.model_info = baseU.record_info(LSTM_Step=lstm_step,
                                             Word_Dimension=input_d,

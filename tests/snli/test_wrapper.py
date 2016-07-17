@@ -2,6 +2,7 @@ from preprocess.snli.batch_generator_snli import BatchGenerator
 from util.save_tool import ResultSaver
 import os
 import config
+import datetime
 
 
 def show_stat(ac, cost, context):
@@ -31,6 +32,7 @@ def wrapper(model_name, model, max_length=80, batch_size=128, benchmark=None):
         benchmark = 0.70
 
     print('Start training.')
+    start = datetime.datetime.now()
     while True:
         cur_batch_data = train_batch_generator.next_batch(batch_size)
 
@@ -60,6 +62,6 @@ def wrapper(model_name, model, max_length=80, batch_size=128, benchmark=None):
                 recorder.logging(info)
 
             print('Number of epoch:', train_batch_generator.epoch)
+            print('Time consumed:', str(datetime.datetime.now() - start))
 
-            # TODO use logging library in python (set a suitable path)
             # asctime  ref: https://docs.python.org/3/howto/logging.html
