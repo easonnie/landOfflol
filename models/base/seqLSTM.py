@@ -14,17 +14,39 @@ class BasicSeqModel:
             self.input = input_
             self.length = length_
 
+            self.reverse_input = tf.reverse_sequence(self.input, seq_dim=1, seq_lengths=tf.cast(self.length, tf.int64))
+
             # default : LSTM
             if cell is None:
-                cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+                cell_f = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
+                cell_r = tf.nn.rnn_cell.BasicLSTMCell(hidden_state_d, state_is_tuple=True)
 
-            self.output, self.last_state = tf.nn.dynamic_rnn(
-                cell,
-                tf.nn.dropout(self.input, input_keep_rate),
-                dtype=tf.float32,
-                sequence_length=self.length,
-            )
-            self.last = tf.nn.dropout(BasicSeqModel.last_relevant(self.output, self.length), output_keep_rate)
+            if len(cell) > 1:
+                cell_f, cell_r = cell
+            else:
+                cell_f = cell
+                cell_r = cell
+
+            with tf.variable_scope('forward'):
+                self.output, self.last_state = tf.nn.dynamic_rnn(
+                    cell_f,
+                    tf.nn.dropout(self.input, input_keep_rate),
+                    dtype=tf.float32,
+                    sequence_length=self.length,
+                )
+                self.last = tf.nn.dropout(BasicSeqModel.last_relevant(self.output, self.length),
+                                          output_keep_rate)
+
+            with tf.variable_scope('backward'):
+                self.reverse_output, self.reverse_last_state = tf.nn.dynamic_rnn(
+                    cell_r,
+                    tf.nn.dropout(self.reverse_input, input_keep_rate),
+                    dtype=tf.float32,
+                    sequence_length=self.length,
+                )
+                self.reverse_last = tf.nn.dropout(BasicSeqModel.last_relevant(self.reverse_output, self.length),
+                                                  output_keep_rate)
+
 
     @staticmethod
     def last_relevant(output, length):

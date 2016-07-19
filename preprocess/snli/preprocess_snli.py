@@ -2,7 +2,7 @@ import json
 import os
 import re
 import sys
-
+import numpy as np
 
 def clean_str(string):
     """
@@ -46,6 +46,18 @@ def read_raw_file(file):
             data.append(item)
 
     return data
+
+
+def sentence2skipthought(data, sentence_d):
+    sentence1 = np.empty((0, sentence_d), dtype=np.float)
+    sentence2 = np.empty((0, sentence_d), dtype=np.float)
+    for item in data:
+        # TODO do something to convert sentence to vector
+        # import skipthoughts
+        # model = skipthoughts.load_model()
+        # vectors = skipthoughts.encode(model, sentence1)
+        pass
+    return
 
 
 def sentence2id(data, word_dict):

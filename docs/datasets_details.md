@@ -14,7 +14,7 @@ Total sentences pairs in each set:
 Before clean:
 test/dev/train 10,000/10,000/55,0152
 After clean:
-test/dev/train 9,824/9,842/
+test/dev/train 9,824/9,842/549367
 
 Distinct words: 73,026
 
