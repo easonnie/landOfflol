@@ -24,8 +24,8 @@ class BasicSeqModel:
             if len(cell) > 1:
                 cell_f, cell_r = cell
             else:
-                cell_f = cell
-                cell_r = cell
+                cell_f = cell[0]
+                cell_r = cell[0]
 
             with tf.variable_scope('forward'):
                 self.output, self.last_state = tf.nn.dynamic_rnn(

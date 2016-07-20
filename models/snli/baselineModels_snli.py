@@ -73,7 +73,7 @@ class SnliSkipThoughtLoader:
 
 class SnliBasicLSTM:
     def __init__(self, lstm_step=80, input_d=300, vocab_size=2196018, hidden_d=100, num_class=3, learning_rate=0.001,
-                 softmax_keeprate=0.5, lstm_input_keep_rate=0.85, lstm_output_keep_rate=0.85, embedding=None,
+                 softmax_keeprate=0.75, lstm_input_keep_rate=1.0, lstm_output_keep_rate=0.90, embedding=None,
                  **kwargs):
         self.model_info = baseU.record_info(LSTM_Step=lstm_step,
                                             Word_Dimension=input_d,
@@ -81,6 +81,8 @@ class SnliBasicLSTM:
                                             LSTM_Hidden_Dimension=hidden_d,
                                             Number_Class=num_class,
                                             SoftMax_Keep_Rate=softmax_keeprate,
+                                            LSTM_Input_Keep_Rate=lstm_input_keep_rate,
+                                            LSTM_Output_Keep_Rate=lstm_input_keep_rate,
                                             kwargs=kwargs)
 
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
@@ -102,20 +104,22 @@ class SnliBasicLSTM:
         self.premise_lstm_last = basic_seq_lstm_premise.last
         self.hypothesis_lstm_last = basic_seq_lstm_hypothesis.last
 
-        self.sentence_embedding_output = tf.concat(1, [self.premise_lstm_last, self.hypothesis_lstm_last])
+        self.sentence_embedding_output = tf.concat(1, [self.premise_lstm_last, self.hypothesis_lstm_last,
+                                                       tf.abs(self.premise_lstm_last - self.hypothesis_lstm_last),
+                                                       tf.mul(self.premise_lstm_last, self.hypothesis_lstm_last)])
 
         with tf.variable_scope('layer1-tanh'):
-            W = tf.Variable(tf.truncated_normal([hidden_d * 2, hidden_d * 2], stddev=0.1), name='W')
-            b = tf.Variable(tf.constant(0.01, shape=[hidden_d * 2]), name='b')
+            W = tf.Variable(tf.truncated_normal([hidden_d * 4, hidden_d * 4], stddev=0.1), name='W')
+            b = tf.Variable(tf.constant(0.01, shape=[hidden_d * 4]), name='b')
             self.layer1_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.sentence_embedding_output, W, b))
 
         with tf.variable_scope('layer2-tanh'):
-            W = tf.Variable(tf.truncated_normal([hidden_d * 2, hidden_d * 2], stddev=0.1), name='W')
-            b = tf.Variable(tf.constant(0.01, shape=[hidden_d * 2]), name='b')
+            W = tf.Variable(tf.truncated_normal([hidden_d * 4, hidden_d * 4], stddev=0.1), name='W')
+            b = tf.Variable(tf.constant(0.01, shape=[hidden_d * 4]), name='b')
             self.layer2_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer1_tanh_output, W, b))
 
         with tf.variable_scope('layer3-tanh'):
-            W = tf.Variable(tf.truncated_normal([hidden_d * 2, num_class], stddev=0.1), name='W')
+            W = tf.Variable(tf.truncated_normal([hidden_d * 4, num_class], stddev=0.1), name='W')
             b = tf.Variable(tf.constant(0.01, shape=[num_class]), name='b')
             self.layer3_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer2_tanh_output, W, b))
 
@@ -172,31 +176,25 @@ class SnliBasicLSTM:
 
 
 class BasicSkipThought:
-    def __init__(self, sentence_d=4800, softmax_keeprate=0.5, learning_rate=0.001, **kwargs):
-        self.model_info = baseU.record_info(SkipThoughtDimension=sentence_d, kwargs=kwargs)
-        self.loader = SnliSkipThoughtLoader(sentence_d=sentence_d)
-        self.sentence_embedding_output = tf.concat(1, [self.loader.premise, self.loader.hypothesis])
+    def __init__(self, sentence_d=4800, softmax_keeprate=0.70, learning_rate=0.001, num_class=3, **kwargs):
+        self.model_info = baseU.record_info(SkipThoughtDimension=sentence_d,
+                                            Softmax_Keep_Rate=softmax_keeprate,
+                                            kwargs=kwargs)
+        self.input_loader = SnliSkipThoughtLoader(sentence_d=sentence_d)
+        self.sentence_embedding_output = tf.concat(1, [self.input_loader.premise, self.input_loader.hypothesis,
+                                                       tf.abs(self.input_loader.premise - self.input_loader.hypothesis)])
 
-        with tf.variable_scope('layer1-tanh'):
-            W = tf.Variable(tf.truncated_normal([sentence_d * 2, sentence_d * 2], stddev=0.1), name='W')
-            b = tf.Variable(tf.constant(0.01, shape=[sentence_d * 2]), name='b')
-            self.layer1_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.sentence_embedding_output, W, b))
+        with tf.variable_scope('layer'):
+            W = tf.Variable(tf.truncated_normal([sentence_d * 3, num_class], stddev=0.1), name='W')
+            b = tf.Variable(tf.constant(0.01, shape=[num_class]), name='b')
+            self.layer3_output = tf.nn.relu(tf.nn.xw_plus_b(self.sentence_embedding_output, W, b))
 
-        with tf.variable_scope('layer2-tanh'):
-            W = tf.Variable(tf.truncated_normal([sentence_d * 2, sentence_d * 2], stddev=0.1), name='W')
-            b = tf.Variable(tf.constant(0.01, shape=[sentence_d * 2]), name='b')
-            self.layer2_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer1_tanh_output, W, b))
-
-        with tf.variable_scope('layer3-tanh'):
-            W = tf.Variable(tf.truncated_normal([sentence_d * 2, sentence_d], stddev=0.1), name='W')
-            b = tf.Variable(tf.constant(0.01, shape=[sentence_d]), name='b')
-            self.layer3_tanh_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer2_tanh_output, W, b))
-
-        self.softmax_output = tf.nn.softmax(self.layer3_tanh_output)
+        # TODO affine layer before softmax >>> Important!!!
+        self.softmax_output = tf.nn.softmax(self.layer3_output)
         self.prediction = tf.argmax(self.softmax_output, dimension=1)
 
         self.cost = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            tf.nn.dropout(self.layer3_tanh_output, keep_prob=softmax_keeprate), self.loader.label)
+            tf.nn.dropout(self.layer3_output, keep_prob=softmax_keeprate), self.input_loader.label)
 
         self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.cost)
         self.init_op = tf.initialize_all_variables()
@@ -206,14 +204,14 @@ class BasicSkipThought:
         self.sess.run(self.train_op, feed_dict=feed_dict)
 
     def predict(self, feed_dict):
-        y_pred = feed_dict[self.loader.label]
+        y_pred = feed_dict[self.input_loader.label]
         out_pred, out_cost = self.sess.run((self.prediction, self.cost), feed_dict=feed_dict)
         accuracy = np.sum(y_pred == out_pred) / len(y_pred)
         return accuracy, (np.sum(out_cost) / len(out_cost))
 
     def setup(self, **info):
         self.sess.run(self.init_op)
-        newinfo = baseU.record_info(info)
+        newinfo = baseU.record_info(Info=info)
         """
         Update the information about the model after load embedding.
         """
@@ -224,5 +222,8 @@ class BasicSkipThought:
         self.sess.close()
 
 if __name__ == '__main__':
-    model = SnliBasicLSTM(Name='BasicLSTM', Embedding='GLOVE')
-    print(str(model.model_info))
+    import inspect
+
+    print(inspect.getsource(BasicSkipThought))
+    # model = SnliBasicLSTM(Name='BasicLSTM', Embedding='GLOVE')
+    # print(str(model.model_info))

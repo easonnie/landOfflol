@@ -5,6 +5,7 @@ import time
 import tensorflow as tf
 import json
 import logging
+import inspect
 
 
 class ResultSaver:
@@ -15,8 +16,10 @@ class ResultSaver:
         self.saver_root = os.path.abspath(os.path.join(OUT_ROOT, '-'.join(['result', model_name, timestamp])))
         self.checkpoint_dir = os.path.abspath(os.path.join(self.saver_root, "checkpoints"))
         self.meta_filename = os.path.abspath(os.path.join(self.saver_root, "meta.json"))
+        self.model_src_filename = os.path.abspath(os.path.join(self.saver_root, "model_src.py"))
         self.log_filename = os.path.abspath(os.path.join(self.saver_root, "log.txt"))
         self.log_file = None
+        self.epoch_filename = os.path.abspath(os.path.join(self.saver_root, 'epoch_info.txt'))
         self.savePara = savePara
         self.sess = sess
         self.tf_saver = None
@@ -29,6 +32,10 @@ class ResultSaver:
         with open(self.meta_filename, 'w', encoding='utf-8') as meta_f:
             json.dump(obj=self.model.model_info, sort_keys=True, indent=4, fp=meta_f)
             print("Saved model meta-info to {}".format(self.log_filename))
+        with open(self.model_src_filename, 'w', encoding='utf-8') as src_f:
+            model_src = inspect.getsource(type(self.model))
+            src_f.write(model_src)
+            src_f.flush()
 
         if self.savePara:
             self.tf_saver = tf.train.Saver(tf.all_variables())
@@ -39,7 +46,12 @@ class ResultSaver:
             logging.info(msg)
         else:
             logging.basicConfig(filename=self.log_filename, level=logging.INFO, format='%(message)s')
+            logging.info(msg)
         print("Logging stats to {}".format(self.log_filename))
+
+    def logging_epoch(self, msg):
+        logging.basicConfig(filename=self.log_filename, level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%m/%d/%Y %H:%M:%S')
+        logging.info(msg)
         # self.log_file.write(msg + '\n')
         # if with_time:
         #     timestamp = '{0:(%Y-%m-%d-%H:%M:%S)}'.format(datetime.now())

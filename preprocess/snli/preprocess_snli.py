@@ -1,8 +1,10 @@
 import json
 import os
 import re
-import sys
+import progressbar as pgb
+import h5py
 import numpy as np
+
 
 def clean_str(string):
     """
@@ -47,12 +49,14 @@ def read_raw_file(file):
 
     return data
 
-
+"""
+This function have been implemented on the cluster
+"""
 def sentence2skipthought(data, sentence_d):
     sentence1 = np.empty((0, sentence_d), dtype=np.float)
     sentence2 = np.empty((0, sentence_d), dtype=np.float)
     for item in data:
-        # TODO do something to convert sentence to vector
+        # DONE WITH OTHER SCRIPT!!!!!!!
         # import skipthoughts
         # model = skipthoughts.load_model()
         # vectors = skipthoughts.encode(model, sentence1)
@@ -120,31 +124,123 @@ def write_clean_data(data, file):
 
         print('Number of item with no glod-label:', count_not_gold_label)
 
+
+def block(file, block_size=65536):
+    while True:
+        nb = file.read(block_size)
+        if not nb:
+            break
+        yield nb
+
+
+def whole(file, block_size=65536):
+    data = ''
+    while True:
+        nb = file.read(block_size)
+        if not nb:
+            break
+        data += nb
+    return data
+
+
+def save_data_to_h5(in_file, out_file):
+    maxlength = 100
+    with open(in_file, 'r') as f:
+        total_num = sum(line.count('\n') for line in block(f)) - 1
+        print('Total num from', in_file, ':', total_num)
+
+        h5file = h5py.File(out_file, 'w')
+        h5file.create_dataset("premise", shape=(total_num, maxlength), dtype=np.int32)
+        h5file.create_dataset("p_len", shape=(total_num, ), dtype=np.int16)
+        h5file.create_dataset("hypothesis", shape=(total_num, maxlength), dtype=np.int32)
+        h5file.create_dataset("h_len", shape=(total_num, ), dtype=np.int16)
+        h5file.create_dataset("label", shape=(total_num, ), dtype=np.int16)
+
+        wdgts = [pgb.SimpleProgress(), ' ',
+             pgb.Bar(marker='∎', left='|', right='|'), ' ',
+             pgb.Timer(), ' ',
+             pgb.ETA()]
+
+        f.seek(0, 0)
+        all_lines = whole(f).split('\n')
+        all_lines.pop(0)
+        print(len(all_lines))
+
+        with pgb.ProgressBar(widgets=wdgts, maxval=total_num) as p:
+            for i, line in enumerate(all_lines):
+                if not line:
+                    break
+
+                line = line.split('|')
+                # sentence1 : premise
+                s_ids_1 = line[0]
+
+                s_ids_1 = np.fromstring(s_ids_1, dtype=np.int32, sep=' ')
+                pad = lambda a, i: a[0: i] if a.shape[0] > i else np.hstack((a, np.zeros(i - a.shape[0], dtype=np.int32)))
+                s_ids_1 = pad(s_ids_1, maxlength)
+                h5file['premise'][i] = s_ids_1
+
+                s_len_1 = np.int16(line[1]) if np.int16(line[1]) < maxlength else maxlength
+                h5file['p_len'][i] = s_len_1
+
+                # sentence2 : hypothesis
+                s_ids_2 = line[2]
+
+                s_ids_2 = np.fromstring(s_ids_2, dtype=np.int32, sep=' ')
+                pad = lambda a, i: a[0: i] if a.shape[0] > i else np.hstack((a, np.zeros(i - a.shape[0], dtype=np.int32)))
+                s_ids_2 = pad(s_ids_2, maxlength)
+                h5file['hypothesis'][i] = s_ids_2
+
+                s_len_2 = np.int16(line[3]) if np.int16(line[3]) < maxlength else maxlength
+                h5file['h_len'][i] = s_len_2
+
+                # label
+                p_label = line[4]
+                h5file['label'][i] = np.int16(p_label)
+
+                h5file.flush()
+
+                p.update(i)
+
+        h5file.close()
+
 if __name__ == '__main__':
-    from util.dict_builder import fine_selected_embedding
-    from util.vocab_stat import get_dict
-    from config import DATA_DIR
+    # from util.dict_builder import fine_selected_embedding
+    # from util.vocab_stat import get_dict
+    # from config import DATA_DIR
+    #
+    # train_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_train.jsonl')
+    # dev_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_dev.jsonl')
+    # test_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_test.jsonl')
+    #
+    # test_data = read_raw_file(test_raw_file)
+    # dev_data = read_raw_file(dev_raw_file)
+    # train_data = read_raw_file(train_raw_file)
+    #
+    # fine_dict = get_dict()
+    # word2id, word_embedding = fine_selected_embedding(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),
+    #                                                   fine_dict, pre_vocab_size=2196018)
+    #
+    # embd_test_data, count_t = sentence2id(test_data, word2id)
+    # embd_dev_data, count_d = sentence2id(dev_data, word2id)
+    # embd_train_data, count_tr = sentence2id(train_data, word2id)
+    # print('Number of unknown words:')
+    # print(count_tr, 'in train')
+    # print(count_t, 'in test')
+    # print(count_d, 'in dev')
+    #
+    # write_clean_data(embd_test_data, os.path.join(DATA_DIR, 'Diy/snli/840b/test_data.txt'))
+    # write_clean_data(embd_dev_data, os.path.join(DATA_DIR, 'Diy/snli/840b/dev_data.txt'))
+    # write_clean_data(embd_train_data, os.path.join(DATA_DIR, 'Diy/snli/840b/train_data.txt'))
+    import config
 
-    train_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_train.jsonl')
-    dev_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_dev.jsonl')
-    test_raw_file = os.path.join(DATA_DIR, 'SNLI/snli_1.0_test.jsonl')
+    test_file = config.SNLI_CLEANED_840B_TEST_SET_FILE
+    dev_file = config.SNLI_CLEANED_840B_DEV_SET_FILE
+    train_file = config.SNLI_CLEANED_840B_TRAIN_SET_FILE
 
-    test_data = read_raw_file(test_raw_file)
-    dev_data = read_raw_file(dev_raw_file)
-    train_data = read_raw_file(train_raw_file)
+    # save_data_to_h5(test_file, config.SNLI_840B_H5_TEST_FILE)
+    # save_data_to_h5(dev_file, config.SNLI_840B_H5_DEV_FILE)
+    save_data_to_h5(train_file, config.SNLI_840B_H5_TRAIN_FILE)
 
-    fine_dict = get_dict()
-    word2id, word_embedding = fine_selected_embedding(os.path.join(DATA_DIR, 'Glove/glove.840B.300d.zip'),
-                                                      fine_dict, pre_vocab_size=2196018)
-
-    embd_test_data, count_t = sentence2id(test_data, word2id)
-    embd_dev_data, count_d = sentence2id(dev_data, word2id)
-    embd_train_data, count_tr = sentence2id(train_data, word2id)
-    print('Number of unknown words:')
-    print(count_tr, 'in train')
-    print(count_t, 'in test')
-    print(count_d, 'in dev')
-
-    write_clean_data(embd_test_data, os.path.join(DATA_DIR, 'Diy/snli/840b/test_data.txt'))
-    write_clean_data(embd_dev_data, os.path.join(DATA_DIR, 'Diy/snli/840b/dev_data.txt'))
-    write_clean_data(embd_train_data, os.path.join(DATA_DIR, 'Diy/snli/840b/train_data.txt'))
+    # file = h5py.File(config.SNLI_840B_H5_TEST_FILE, 'r')
+    # print(file['premise'].shape)

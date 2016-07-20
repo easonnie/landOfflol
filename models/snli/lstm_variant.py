@@ -13,6 +13,8 @@ class biLSTM(SnliBasicLSTM):
                                             LSTM_Hidden_Dimension=hidden_d,
                                             Number_Class=num_class,
                                             SoftMax_Keep_Rate=softmax_keeprate,
+                                            LSTM_Input_Keep_Rate=lstm_input_keep_rate,
+                                            LSTM_Output_Keep_Rate=lstm_output_keep_rate,
                                             kwargs=kwargs)
 
         self.input_loader = SnliLoader(lstm_step, input_d, vocab_size, embedding)
@@ -44,20 +46,21 @@ class biLSTM(SnliBasicLSTM):
         self.hypothesis_embedding = tf.concat(1, [self.hypothesis_lstm_last, self.r_hypothesis_lstm_last])
 
         self.sentence_embedding_output = tf.concat(1, [self.premise_embedding, self.hypothesis_embedding,
-                                                       tf.abs(self.premise_embedding - self.hypothesis_embedding)])
+                                                       tf.abs(self.premise_embedding - self.hypothesis_embedding),
+                                                       tf.mul(self.premise_embedding, self.hypothesis_embedding)])
 
         with tf.variable_scope('layer1'):
-            W = tf.Variable(tf.random_uniform([hidden_d * 6, hidden_d * 6], minval=-0.02, maxval=0.02), name='W')
-            b = tf.Variable(tf.constant(0.02, shape=[hidden_d * 6]), name='b')
+            W = tf.Variable(tf.random_uniform([hidden_d * 8, hidden_d * 8], minval=-0.02, maxval=0.02), name='W')
+            b = tf.Variable(tf.constant(0.02, shape=[hidden_d * 8]), name='b')
             self.layer1_output = tf.nn.tanh(tf.nn.xw_plus_b(self.sentence_embedding_output, W, b))
 
         with tf.variable_scope('layer2'):
-            W = tf.Variable(tf.random_uniform([hidden_d * 6, hidden_d * 6], minval=-0.02, maxval=0.02), name='W')
-            b = tf.Variable(tf.constant(0.02, shape=[hidden_d * 6]), name='b')
+            W = tf.Variable(tf.random_uniform([hidden_d * 8, hidden_d * 8], minval=-0.02, maxval=0.02), name='W')
+            b = tf.Variable(tf.constant(0.02, shape=[hidden_d * 8]), name='b')
             self.layer2_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer1_output, W, b))
 
         with tf.variable_scope('layer3'):
-            W = tf.Variable(tf.random_uniform([hidden_d * 6, num_class], minval=-0.02, maxval=0.02), name='W')
+            W = tf.Variable(tf.random_uniform([hidden_d * 8, num_class], minval=-0.02, maxval=0.02), name='W')
             b = tf.Variable(tf.constant(0.02, shape=[num_class]), name='b')
             self.layer3_output = tf.nn.tanh(tf.nn.xw_plus_b(self.layer2_output, W, b))
 

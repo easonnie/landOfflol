@@ -23,6 +23,20 @@ SNLI_CLEANED_840B_TRAIN_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'train_d
 SNLI_CLEANED_840B_DEV_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'dev_data.txt')
 SNLI_CLEANED_840B_TEST_SET_FILE = os.path.join(SNLI_CLEANED_840B_PATH, 'test_data.txt')
 
+SNLI_840B_H5_TRAIN_FILE = os.path.join(DATA_DIR, 'Diy/snli/train_data.h5')
+SNLI_840B_H5_TEST_FILE = os.path.join(DATA_DIR, 'Diy/snli/test_data.h5')
+SNLI_840B_H5_DEV_FILE = os.path.join(DATA_DIR, 'Diy/snli/dev_data.h5')
+
+SNLI_SKIPTH_TEST_FILE_ON_MAC = os.path.join(DATA_DIR, 'Diy/snli_skipth_data/snli_test_data.h5')
+SNLI_SKIPTH_DEV_FILE_ON_MAC = os.path.join(DATA_DIR, 'Diy/snli_skipth_data/snli_dev_data.h5')
+SNLI_SKIPTH_TRAIN_FILE_ON_MAC = os.path.join(DATA_DIR, 'Diy/snli_skipth_data/snli_train_data.h5')
+
+SLURM_DATA_ROOT = '/share/data/ripl'
+
+SNLI_SKIPTH_TRAIN_FILE_ON_SLURM = os.path.join(SLURM_DATA_ROOT, 'snli_skipth_data/snli_train_data.h5')
+SNLI_SKIPTH_DEV_FILE_ON_SLURM = os.path.join(SLURM_DATA_ROOT, 'snli_skipth_data/snli_dev_data.h5')
+SNLI_SKIPTH_TEST_FILE_ON_SLURM = os.path.join(SLURM_DATA_ROOT, 'snli_skipth_data/snli_test_data.h5')
+
 
 def info_(**kwargs):
     return kwargs
